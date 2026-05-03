@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="IPL Predictor">
+<meta name="theme-color" content="#0A0C10">
+<title>IPL 2026 Playoff Predictor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold:#F5A623; --gold-dim:rgba(245,166,35,0.13); --gold-border:rgba(245,166,35,0.32);
+  --bg:#0A0C10; --s1:#13161F; --s2:#1C2030; --s3:#252A3A;
+  --b1:rgba(255,255,255,0.07); --b2:rgba(255,255,255,0.13);
+  --text:#EEF0F7; --m1:#626880; --m2:#8A91A8;
+  --green:#34D399; --gbg:rgba(52,211,153,0.1); --gbr:rgba(52,211,153,0.25);
+  --amber:#FBBF24; --abg:rgba(251,191,36,0.1); --abr:rgba(251,191,36,0.25);
+  --red:#F87171; --rbg:rgba(248,113,113,0.1); --rbr:rgba(248,113,113,0.25);
+  --blue:#60A5FA; --bbg:rgba(96,165,250,0.12); --bbr:rgba(96,165,250,0.35);
+  --nav:56px; --sb:env(safe-area-inset-bottom,0px); --st:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;display:flex;flex-direction:column;}
+
+.header{flex-shrink:0;padding:max(16px,var(--st)) 18px 14px;background:var(--bg);border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;}
+.header h1{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:.04em;line-height:1;}
+.header h1 span{color:var(--gold);}
+.header p{font-size:11px;color:var(--m2);font-weight:300;margin-top:2px;}
+.hbadge{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);background:var(--gold-dim);border:1px solid var(--gold-border);padding:4px 9px;border-radius:20px;}
+
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 14px calc(var(--nav) + var(--sb) + 24px);}
+
+.bnav{flex-shrink:0;height:calc(var(--nav) + var(--sb));padding-bottom:var(--sb);background:var(--s1);border-top:1px solid var(--b2);display:flex;}
+.nbtn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:none;background:none;color:var(--m1);cursor:pointer;transition:color .2s;font-family:'DM Sans',sans-serif;position:relative;}
+.nbtn.active{color:var(--gold);}
+.nbtn svg{width:22px;height:22px;stroke-width:1.8;fill:none;stroke:currentColor;}
+.nbtn span{font-size:10px;font-weight:500;letter-spacing:.02em;}
+.ndot{width:6px;height:6px;border-radius:50%;background:var(--gold);position:absolute;top:8px;right:calc(50% - 16px);display:none;}
+.nbtn.has-picks .ndot{display:block;}
+
+.sec{display:none;} .sec.active{display:block;}
+
+/* Progress */
+.prog-card{background:var(--s1);border:1px solid var(--b1);border-radius:14px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;}
+.prog-track{flex:1;height:5px;background:var(--s3);border-radius:3px;overflow:hidden;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--gold),#FFD580);border-radius:3px;transition:width .35s cubic-bezier(.4,0,.2,1);}
+.prog-lbl{font-size:13px;font-weight:500;color:var(--m2);white-space:nowrap;}
+.prog-lbl b{color:var(--gold);font-weight:600;}
+.rbtn{font-size:12px;font-weight:500;color:var(--m2);border:1px solid var(--b2);background:none;padding:6px 12px;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;}
+
+.dlbl{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--m1);padding:14px 4px 8px;}
+
+/* Match card */
+.mc{background:var(--s1);border:1px solid var(--b1);border-radius:14px;padding:12px 14px;margin-bottom:8px;transition:border-color .25s;}
+.mc.picked{border-color:rgba(96,165,250,.22);}
+.mt{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.mno{font-size:11px;color:var(--m1);font-weight:300;}
+.tr{display:flex;align-items:stretch;gap:8px;}
+.tbtn{flex:1;padding:11px 10px;font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;border:1px solid var(--b2);border-radius:10px;cursor:pointer;background:var(--s2);color:var(--m2);transition:all .18s;text-align:center;line-height:1.25;touch-action:manipulation;}
+.tbtn .tn{display:block;} .tbtn .ts{display:none;}
+.tbtn:active{transform:scale(.97);}
+.tbtn.sel{background:var(--bbg);color:var(--blue);border-color:var(--bbr);font-weight:600;}
+.tbtn.los{opacity:.32;}
+.vslbl{display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--m1);flex-shrink:0;font-weight:300;}
+
+/* NRR impact */
+.nrr-row{display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--b1);}
+.mc.picked .nrr-row{display:flex;gap:6px;}
+.ntb{flex:1;}
+.ntn{font-size:10px;color:var(--m2);margin-bottom:5px;}
+.nbadges{display:flex;gap:4px;align-items:center;flex-wrap:wrap;}
+.nb{font-size:10px;font-weight:600;padding:2px 6px;border-radius:6px;}
+.nb.up{background:var(--gbg);color:var(--green);}
+.nb.dn{background:var(--rbg);color:var(--red);}
+.nb-sep{font-size:10px;color:var(--m1);font-weight:300;}
+.ndiv{width:1px;background:var(--b2);flex-shrink:0;margin:0 4px;}
+
+/* Standings */
+.sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;}
+.scard{background:var(--s1);border:1px solid var(--b1);border-radius:12px;padding:12px 10px;text-align:center;}
+.slbl{font-size:10px;color:var(--m1);margin-bottom:5px;font-weight:400;}
+.sval{font-family:'Bebas Neue',sans-serif;font-size:26px;line-height:1;color:var(--text);}
+.sval.g{color:var(--gold);}
+
+.slist{display:flex;flex-direction:column;gap:6px;}
+.sr{background:var(--s1);border:1px solid var(--b1);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;}
+.sr.t4{background:var(--gbg);border-color:var(--gbr);}
+.sr.bub{background:var(--abg);border-color:var(--abr);}
+.srk{font-family:'Bebas Neue',sans-serif;font-size:20px;min-width:20px;text-align:center;color:var(--m1);}
+.sr.t4 .srk{color:var(--green);} .sr.bub .srk{color:var(--amber);}
+.si{flex:1;min-width:0;}
+.sn{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.srec{font-size:11px;color:var(--m1);font-weight:300;margin-top:1px;}
+.snrr-rng{display:flex;gap:4px;align-items:center;flex-wrap:wrap;margin-top:4px;}
+.nc{font-size:9px;font-weight:600;padding:2px 5px;border-radius:4px;}
+.nc.b{background:var(--gbg);color:var(--green);}
+.nc.w{background:var(--rbg);color:var(--red);}
+.nc-lbl{font-size:9px;color:var(--m1);font-weight:300;}
+.srt{text-align:right;}
+.spts{font-family:'Bebas Neue',sans-serif;font-size:24px;line-height:1;color:var(--text);}
+.sr.t4 .spts{color:var(--green);} .sr.bub .spts{color:var(--amber);}
+.qb{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.08em;padding:2px 6px;border-radius:5px;background:var(--gbg);color:var(--green);border:1px solid var(--gbr);margin-left:5px;vertical-align:middle;}
+.nrr-u{color:var(--green);} .nrr-d{color:var(--red);}
+.cdiv{position:relative;height:1px;background:var(--gold-border);margin:8px 0;}
+.cdiv::after{content:'PLAYOFF CUT';position:absolute;right:0;top:-8px;font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--gold);background:var(--bg);padding:0 6px;}
+
+/* Analysis */
+.ablk{margin-bottom:20px;}
+.bhdg{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--m1);margin-bottom:8px;}
+.ac{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;margin-bottom:6px;}
+.ac.in{background:var(--gbg);border:1px solid var(--gbr);}
+.ac.maybe{background:var(--abg);border:1px solid var(--abr);}
+.ac.out{background:var(--rbg);border:1px solid var(--rbr);}
+.ark{font-family:'Bebas Neue',sans-serif;font-size:22px;min-width:20px;}
+.in .ark{color:var(--green);} .maybe .ark{color:var(--amber);} .out .ark{color:var(--red);}
+.aif{flex:1;min-width:0;}
+.anm{font-size:13px;font-weight:500;}
+.asb{font-size:11px;font-weight:300;margin-top:2px;}
+.in .asb{color:var(--green);} .maybe .asb{color:var(--amber);} .out .asb{color:var(--red);}
+.apt{font-family:'Bebas Neue',sans-serif;font-size:22px;}
+.in .apt{color:var(--green);} .maybe .apt{color:var(--amber);} .out .apt{color:var(--red);}
+
+.cbig{background:var(--s1);border:1px solid var(--b1);border-radius:14px;padding:20px;display:flex;align-items:center;gap:16px;}
+.cnum{font-family:'Bebas Neue',sans-serif;font-size:60px;line-height:1;color:var(--gold);}
+.ctit{font-size:14px;font-weight:500;margin-bottom:4px;}
+.csub{font-size:12px;color:var(--m1);font-weight:300;}
+.exp{background:var(--s1);border:1px solid var(--b1);border-radius:12px;padding:14px 16px;margin-top:12px;}
+.exp h3{font-size:13px;font-weight:600;margin-bottom:6px;}
+.exp p{font-size:12px;color:var(--m2);line-height:1.6;font-weight:300;}
+.leg{display:flex;gap:12px;margin-top:10px;flex-wrap:wrap;}
+.li{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--m2);}
+.dot{width:8px;height:8px;border-radius:50%;}
+
+.footer{text-align:center;margin-top:32px;padding-top:20px;border-top:1px solid var(--b1);font-size:11px;color:var(--m1);font-weight:300;line-height:1.8;}
+.footer a{color:var(--gold);text-decoration:none;}
+
+@media(max-width:380px){
+  .tbtn .tn{display:none;} .tbtn .ts{display:block;}
+  .sgrid{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>IPL <span>2026</span> Predictor</h1>
+    <p>Standings &amp; NRR impact · Updated 2 May</p>
+  </div>
+  <div class="hbadge">Season 19</div>
+</div>
+
+<div class="scroll" id="scroll">
+  <div id="tab-fixtures" class="sec active">
+    <div class="prog-card">
+      <div class="prog-track"><div class="prog-fill" id="pf" style="width:0%"></div></div>
+      <div class="prog-lbl"><b id="pn">0</b>/26</div>
+      <button class="rbtn" onclick="resetAll()">Reset</button>
+    </div>
+    <div id="mlist"></div>
+    <div class="footer">Fixtures from <a href="https://www.espncricinfo.com/series/ipl-2026-1510719/match-schedule-fixtures-and-results" target="_blank">ESPNcricinfo</a><br>Save to home screen · works offline once loaded</div>
+  </div>
+  <div id="tab-standings" class="sec">
+    <div class="sgrid" id="sgrid"></div>
+    <div class="slist" id="slist"></div>
+    <p style="font-size:11px;color:var(--m1);margin-top:10px;font-weight:300;line-height:1.6;">Green = projected top 4 · Amber = mathematically alive · NRR range = best/worst case for remaining unpicked games</p>
+  </div>
+  <div id="tab-analysis" class="sec"><div id="ac"></div></div>
+</div>
+
+<nav class="bnav">
+  <button class="nbtn active" id="nb-fixtures" onclick="showTab('fixtures')">
+    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    <span>Matches</span><div class="ndot"></div>
+  </button>
+  <button class="nbtn" id="nb-standings" onclick="showTab('standings')">
+    <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    <span>Standings</span>
+  </button>
+  <button class="nbtn" id="nb-analysis" onclick="showTab('analysis')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <span>Race</span>
+  </button>
+</nav>
+
+<script>
+const T={
+  PBKS:{name:"Punjab Kings",short:"PBKS"},
+  RCB:{name:"Royal Challengers Bengaluru",short:"RCB"},
+  SRH:{name:"Sunrisers Hyderabad",short:"SRH"},
+  RR:{name:"Rajasthan Royals",short:"RR"},
+  GT:{name:"Gujarat Titans",short:"GT"},
+  CSK:{name:"Chennai Super Kings",short:"CSK"},
+  DC:{name:"Delhi Capitals",short:"DC"},
+  KKR:{name:"Kolkata Knight Riders",short:"KKR"},
+  MI:{name:"Mumbai Indians",short:"MI"},
+  LSG:{name:"Lucknow Super Giants",short:"LSG"}
+};
+
+// Base standings with runs/overs for NRR computation
+// overs in X.Y format where Y = balls (0-5)
+const B={
+  PBKS:{m:8, w:6,l:1,pts:13,nrr:1.043, rf:1537,of:"132.0",ra:1477,oa:"139.2"},
+  RCB: {m:9, w:6,l:3,pts:12,nrr:1.420, rf:1656,of:"156.1",ra:1595,oa:"173.4"},
+  SRH: {m:9, w:6,l:3,pts:12,nrr:0.832, rf:1932,of:"177.1",ra:1756,oa:"174.2"},
+  RR:  {m:10,w:6,l:4,pts:12,nrr:0.510, rf:1844,of:"180.3",ra:1828,oa:"188.2"},
+  GT:  {m:9, w:5,l:4,pts:10,nrr:-0.192,rf:1547,of:"170.5",ra:1646,oa:"178.0"},
+  CSK: {m:9, w:4,l:5,pts:8, nrr:0.005, rf:1656,of:"178.1",ra:1556,oa:"167.3"},
+  DC:  {m:9, w:4,l:5,pts:8, nrr:-0.895,rf:1646,of:"174.2",ra:1709,oa:"165.2"},
+  KKR: {m:8, w:2,l:5,pts:5, nrr:-0.751,rf:1218,of:"139.4",ra:1315,oa:"138.5"},
+  MI:  {m:9, w:2,l:7,pts:4, nrr:-0.803,rf:1631,of:"170.1",ra:1688,oa:"162.3"},
+  LSG: {m:8, w:2,l:6,pts:4, nrr:-1.106,rf:1267,of:"159.5",ra:1364,oa:"151.0"}
+};
+
+function po(o){const p=String(o).split('.');return parseInt(p[0])+(p[1]?parseInt(p[1])/6:0);}
+
+// NRR scenarios: [winner_runs, winner_overs, loser_runs, loser_overs]
+// Best for winner = bat first big win; Worst for winner = squeak through chasing
+const SC={best:[185,20,140,20], worst:[158,19.3,154,20]};
+
+function projNRR(team, isWinner, sc){
+  const [wr,wo,lr,lo]=SC[sc];
+  const b=B[team];
+  let rf=b.rf, of=po(b.of), ra=b.ra, oa=po(b.oa);
+  if(isWinner){rf+=wr;of+=wo;ra+=lr;oa+=lo;}
+  else{rf+=lr;of+=lo;ra+=wr;oa+=wo;}
+  return ((rf/of)-(ra/oa)).toFixed(3);
+}
+
+function nrrRange(team, isWinner){
+  const a=parseFloat(projNRR(team,isWinner,'best'));
+  const b=parseFloat(projNRR(team,isWinner,'worst'));
+  return isWinner
+    ? {hi:Math.max(a,b).toFixed(3), lo:Math.min(a,b).toFixed(3)}
+    : {hi:Math.max(a,b).toFixed(3), lo:Math.min(a,b).toFixed(3)};
+}
+
+const M=[
+  {id:1, date:"Sun, 3 May",  no:"45th",t1:"SRH", t2:"KKR"},
+  {id:2, date:"Sun, 3 May",  no:"46th",t1:"GT",  t2:"PBKS"},
+  {id:3, date:"Mon, 4 May",  no:"47th",t1:"MI",  t2:"LSG"},
+  {id:4, date:"Tue, 5 May",  no:"48th",t1:"DC",  t2:"CSK"},
+  {id:5, date:"Wed, 6 May",  no:"49th",t1:"SRH", t2:"PBKS"},
+  {id:6, date:"Thu, 7 May",  no:"50th",t1:"LSG", t2:"RCB"},
+  {id:7, date:"Fri, 8 May",  no:"51st",t1:"DC",  t2:"KKR"},
+  {id:8, date:"Sat, 9 May",  no:"52nd",t1:"RR",  t2:"GT"},
+  {id:9, date:"Sun, 10 May", no:"53rd",t1:"CSK", t2:"LSG"},
+  {id:10,date:"Sun, 10 May", no:"54th",t1:"RCB", t2:"MI"},
+  {id:11,date:"Mon, 11 May", no:"55th",t1:"PBKS",t2:"DC"},
+  {id:12,date:"Tue, 12 May", no:"56th",t1:"GT",  t2:"SRH"},
+  {id:13,date:"Wed, 13 May", no:"57th",t1:"RCB", t2:"KKR"},
+  {id:14,date:"Thu, 14 May", no:"58th",t1:"PBKS",t2:"MI"},
+  {id:15,date:"Fri, 15 May", no:"59th",t1:"LSG", t2:"CSK"},
+  {id:16,date:"Sat, 16 May", no:"60th",t1:"KKR", t2:"GT"},
+  {id:17,date:"Sun, 17 May", no:"61st",t1:"PBKS",t2:"RCB"},
+  {id:18,date:"Sun, 17 May", no:"62nd",t1:"DC",  t2:"RR"},
+  {id:19,date:"Mon, 18 May", no:"63rd",t1:"CSK", t2:"SRH"},
+  {id:20,date:"Tue, 19 May", no:"64th",t1:"RR",  t2:"LSG"},
+  {id:21,date:"Wed, 20 May", no:"65th",t1:"KKR", t2:"MI"},
+  {id:22,date:"Thu, 21 May", no:"66th",t1:"GT",  t2:"CSK"},
+  {id:23,date:"Fri, 22 May", no:"67th",t1:"SRH", t2:"RCB"},
+  {id:24,date:"Sat, 23 May", no:"68th",t1:"LSG", t2:"PBKS"},
+  {id:25,date:"Sun, 24 May", no:"69th",t1:"MI",  t2:"RR"},
+  {id:26,date:"Sun, 24 May", no:"70th",t1:"KKR", t2:"DC"},
+];
+
+let picks={};
+
+function getProj(){
+  const s={};
+  for(const [k,v] of Object.entries(B)) s[k]={...v,pnrr:v.nrr};
+  for(const m of M){
+    const w=picks[m.id]; if(!w) continue;
+    const l=w===m.t1?m.t2:m.t1;
+    s[w].m++;s[w].w++;s[w].pts+=2;
+    s[l].m++;s[l].l++;
+    const wr=nrrRange(w,true), lr=nrrRange(l,false);
+    s[w].pnrr=(parseFloat(wr.hi)+parseFloat(wr.lo))/2;
+    s[l].pnrr=(parseFloat(lr.hi)+parseFloat(lr.lo))/2;
+  }
+  return Object.entries(s).map(([k,v])=>({team:k,...v}))
+    .sort((a,b)=>b.pts-a.pts||b.pnrr-a.pnrr);
+}
+
+function renderMatches(){
+  const done=Object.keys(picks).length;
+  document.getElementById('pn').textContent=done;
+  document.getElementById('pf').style.width=(done/26*100)+'%';
+  const nb=document.getElementById('nb-fixtures');
+  done>0?nb.classList.add('has-picks'):nb.classList.remove('has-picks');
+  let html='',ld='';
+  for(const m of M){
+    if(m.date!==ld){html+=`<div class="dlbl">${m.date}</div>`;ld=m.date;}
+    const p=picks[m.id];
+    const c1=p===m.t1?'sel':p?'los':'', c2=p===m.t2?'sel':p?'los':'';
+    let nrr='';
+    if(p){
+      const win=p, los=p===m.t1?m.t2:m.t1;
+      const wr=nrrRange(win,true), lr=nrrRange(los,false);
+      nrr=`<div class="nrr-row">
+        <div class="ntb">
+          <div class="ntn">${T[win].short} (winner)</div>
+          <div class="nbadges">
+            <span class="nb up">Best ${wr.hi}</span>
+            <span class="nb-sep">to</span>
+            <span class="nb up">Min ${wr.lo}</span>
+          </div>
+        </div>
+        <div class="ndiv"></div>
+        <div class="ntb">
+          <div class="ntn">${T[los].short} (loser)</div>
+          <div class="nbadges">
+            <span class="nb dn">Best ${lr.hi}</span>
+            <span class="nb-sep">to</span>
+            <span class="nb dn">Worst ${lr.lo}</span>
+          </div>
+        </div>
+      </div>`;
+    }
+    html+=`<div class="mc${p?' picked':''}">
+      <div class="mt"><span class="mno">Match ${m.no}</span>${p?'<span style="font-size:10px;color:var(--m2);font-weight:300;">NRR impact ↓</span>':''}</div>
+      <div class="tr">
+        <button class="tbtn ${c1}" onclick="setPick(${m.id},'${m.t1}')"><span class="tn">${T[m.t1].name}</span><span class="ts">${T[m.t1].short}</span></button>
+        <div class="vslbl">vs</div>
+        <button class="tbtn ${c2}" onclick="setPick(${m.id},'${m.t2}')"><span class="tn">${T[m.t2].name}</span><span class="ts">${T[m.t2].short}</span></button>
+      </div>${nrr}</div>`;
+  }
+  document.getElementById('mlist').innerHTML=html;
+}
+
+function renderStandings(){
+  const proj=getProj();
+  const done=Object.keys(picks).length, left=26-done;
+  document.getElementById('sgrid').innerHTML=`
+    <div class="scard"><div class="slbl">Picked</div><div class="sval g">${done}</div></div>
+    <div class="scard"><div class="slbl">Remaining</div><div class="sval">${left}</div></div>
+    <div class="scard"><div class="slbl">Leader</div><div class="sval g">${proj[0].pts}<span style="font-size:12px;color:var(--m1)">pts</span></div></div>
+    <div class="scard"><div class="slbl">10th place</div><div class="sval">${proj[9].pts}<span style="font-size:12px;color:var(--m1)">pts</span></div></div>`;
+  let html='';
+  proj.forEach((r,i)=>{
+    const cls=i<4?'t4':i<6?'bub':'';
+    if(i===4) html+='<div class="cdiv"></div>';
+    const rem=M.filter(m=>!picks[m.id]&&(m.t1===r.team||m.t2===r.team));
+    let rng='';
+    if(rem.length>0){
+      const best=nrrRange(r.team,true).hi;
+      const worst=nrrRange(r.team,false).lo;
+      rng=`<div class="snrr-rng">
+        <span class="nc-lbl">NRR range:</span>
+        <span class="nc b">↑${best}</span>
+        <span class="nc-lbl">to</span>
+        <span class="nc w">↓${worst}</span>
+        <span class="nc-lbl">(${rem.length} left)</span>
+      </div>`;
+    }
+    html+=`<div class="sr ${cls}">
+      <div class="srk">${i+1}</div>
+      <div class="si">
+        <div class="sn">${T[r.team].name}${i<4?'<span class="qb">Q</span>':''}</div>
+        <div class="srec">${r.w}W ${r.l}L · <span class="${r.pnrr>=0?'nrr-u':'nrr-d'}">${r.pnrr>=0?'+':''}${r.pnrr.toFixed(3)}</span></div>
+        ${rng}
+      </div>
+      <div class="srt"><div class="spts">${r.pts}</div><div style="font-size:9px;color:var(--m1);text-align:right">pts</div></div>
+    </div>`;
+  });
+  document.getElementById('slist').innerHTML=html;
+}
+
+function renderAnalysis(){
+  const proj=getProj();
+  const cutoff=proj[3].pts;
+  const left=26-Object.keys(picks).length;
+  let html=`<div class="ablk"><div class="bhdg">Projected playoff qualifiers</div>`;
+  proj.slice(0,4).forEach((r,i)=>{
+    html+=`<div class="ac in"><div class="ark">${i+1}</div><div class="aif"><div class="anm">${T[r.team].name}</div><div class="asb">NRR ${r.pnrr>=0?'+':''}${r.pnrr.toFixed(3)}</div></div><div class="apt">${r.pts}</div></div>`;
+  });
+  html+=`</div><div class="ablk"><div class="bhdg">Projected out</div>`;
+  proj.slice(4).forEach((r,i)=>{
+    const gap=cutoff-r.pts, alive=(r.pts+left*2)>=cutoff;
+    html+=`<div class="ac ${alive?'maybe':'out'}"><div class="ark">${5+i}</div><div class="aif"><div class="anm">${T[r.team].name}</div><div class="asb">${alive?`Needs ${gap} more pts from ${left} games`:'Mathematically eliminated'}</div></div><div class="apt">${r.pts}</div></div>`;
+  });
+  html+=`</div><div class="ablk"><div class="bhdg">4th place cutoff</div>
+    <div class="cbig"><div class="cnum">${cutoff}</div><div><div class="ctit">Points to qualify</div><div class="csub">${left} match${left!==1?'es':''} still to pick</div></div></div>
+    <div class="exp"><h3>How NRR ranges work</h3>
+    <p>After you pick a winner, we show the projected NRR range for both teams based on realistic T20 outcomes — from a narrow 4-run chase to a 45-run batting demolition.</p>
+    <div class="leg">
+      <div class="li"><div class="dot" style="background:var(--green)"></div>Best = big winning margin</div>
+      <div class="li"><div class="dot" style="background:var(--red)"></div>Worst = narrow win or heavy defeat</div>
+    </div></div>
+  </div>`;
+  document.getElementById('ac').innerHTML=html;
+}
+
+function setPick(id,w){
+  picks[id]===w?delete picks[id]:picks[id]=w;
+  renderAll();
+}
+function renderAll(){renderMatches();renderStandings();renderAnalysis();}
+function showTab(t){
+  ['fixtures','standings','analysis'].forEach(x=>{
+    document.getElementById('tab-'+x).classList.toggle('active',x===t);
+    document.getElementById('nb-'+x).classList.toggle('active',x===t);
+  });
+  document.getElementById('scroll').scrollTop=0;
+}
+function resetAll(){picks={};renderAll();}
+renderAll();
+</script>
+</body>
+</html>
